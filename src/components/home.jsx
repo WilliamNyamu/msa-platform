@@ -7,14 +7,18 @@ import Hero from "../pages/Home/Hero";
 import Vision from "../pages/Home/vision";
 import UpcomingEvent from "../pages/Home/upcoming-event";
 
-export default function Home(){
+const Home = React.memo(() => {
     return (
         <div>
-            <Hero />
-            <OurSnapshot />
-            <Vision />
-            <UpcomingEvent />
-            <Testimonials />
+            <Hero key="hero" />
+            <OurSnapshot key="snapshot" />
+            <Vision key="vision" />
+            <UpcomingEvent key="upcoming-event" />
+            <Testimonials key="testimonials" />
         </div>
     )
-}
+});
+
+Home.displayName = 'Home';
+
+export default Home;

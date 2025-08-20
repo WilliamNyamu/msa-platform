@@ -1,7 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { MemberStats } from './memberstats'
-import HeroImage from '/images/home/practice.jpg'
 
 export default function Hero(){
     return (
@@ -29,7 +28,7 @@ export default function Hero(){
                         <div className='relative rounded-lg overflow-hidden shadow-xl'>
                             <div className='absolute inset-0 bg-gradient-to-r from-brand-blue/30 to-brand-blue-alt/30 mix-blend-multiply'></div>
                             <img 
-                                src={HeroImage}
+                                src="/images/home/practice.jpg"
                                 alt='African Youth learning digital skills'
                                 className='w-full h-auto object-cover'
                             />

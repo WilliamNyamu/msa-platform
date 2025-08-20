@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation, Outlet } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import MenuIcon from "../../assets/menu.png";
@@ -141,7 +141,6 @@ const Navbar = () => {
           />
         )}
       </header>
-      <Outlet />
     </>
   );
 };
