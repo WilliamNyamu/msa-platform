@@ -4,8 +4,6 @@ import { Link, useLocation, Outlet } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import MenuIcon from "../../assets/menu.png";
-import Logo from "../../assets/logo.png"
-
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -51,7 +49,7 @@ const Navbar = () => {
               <span className="text-white font-bold text-sm">M</span>
             </div>
             <span className="text-xl font-bold">
-              <span className="bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">MSA</span>
+              <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">MSA</span>
             </span>
           </Link>
           
