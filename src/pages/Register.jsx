@@ -4,6 +4,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { User, GraduationCap, Phone, Calendar, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '../components/Layout/Navbar';
+import RegistrationSuccess from '../components/RegistrationSuccess';
 
 export default function Registration() {
     // Firebase collection reference for storing member data
@@ -11,13 +12,16 @@ export default function Registration() {
     
     // Loading state to show user feedback during form submission
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Success state to show celebration component
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [registeredMemberName, setRegisteredMemberName] = useState('');
 
     // State to manage all form data
     const [memberData, setMemberData] = useState({
         fullName: '',
-        membershipType: '',
-        currentYear: '',
-        graduationYear: '',
+        studentType: '', // 'first_year' or 'ongoing_student'
+        currentYear: '', // Only for ongoing students (2, 3, or 4)
         phoneNumber: '',
     });
 
@@ -63,16 +67,15 @@ export default function Registration() {
     }
 
     /**
-     * Handle membership type selection
-     * Resets conditional fields when membership type changes
+     * Handle student type selection
+     * Resets year field when student type changes
      */
-    function handleMembershipTypeChange(type) {
+    function handleStudentTypeChange(type) {
         setMemberData(prev => ({
             ...prev,
-            membershipType: type,
-            // Reset conditional fields when changing membership type
-            currentYear: '',
-            graduationYear: ''
+            studentType: type,
+            // Reset year field when changing student type
+            currentYear: ''
         }));
     }
 
@@ -90,16 +93,19 @@ export default function Registration() {
             // Validate required fields based on membership type
             if (!memberData.fullName.trim()) {
                 toast.error('Please enter your full name');
+                setIsLoading(false);
                 return;
             }
 
-            if (!memberData.membershipType) {
-                toast.error('Please select a membership type');
+            if (!memberData.studentType) {
+                toast.error('Please select whether you are a first year or ongoing student');
+                setIsLoading(false);
                 return;
             }
 
             if (!memberData.phoneNumber.trim()) {
                 toast.error('Please enter your phone number');
+                setIsLoading(false);
                 return;
             }
 
@@ -107,69 +113,127 @@ export default function Registration() {
             const phoneDigits = memberData.phoneNumber.replace(/\D/g, '');
             if (phoneDigits.length !== 10) {
                 toast.error('Phone number must be exactly 10 digits');
+                setIsLoading(false);
                 return;
             }
 
-            // Validate conditional fields
-            if (memberData.membershipType === 'current_student' && !memberData.currentYear) {
+            // Validate year selection for ongoing students
+            if (memberData.studentType === 'ongoing_student' && !memberData.currentYear) {
                 toast.error('Please select your current year of study');
-                return;
-            }
-
-            if (memberData.membershipType === 'associate' && !memberData.graduationYear) {
-                toast.error('Please enter your graduation year');
+                setIsLoading(false);
                 return;
             }
 
             // Prepare data for Firestore
             const memberDataToSave = {
                 fullName: memberData.fullName.trim(),
-                membershipType: memberData.membershipType,
+                studentType: memberData.studentType,
                 // Remove formatting from phone number before saving (keep only digits)
-                phoneNumber: memberData.phoneNumber.replace(/\D/g, ''),
+                phoneNumber: phoneDigits,
                 // Add timestamp for when the registration was created
                 createdAt: serverTimestamp(),
+                // Add registration metadata
+                registrationDate: new Date().toISOString(),
+                status: 'active'
             };
 
-            // Add conditional fields based on membership type
-            if (memberData.membershipType === 'current_student') {
-                memberDataToSave.currentYear = memberData.currentYear;
-                memberDataToSave.status = 'active_student';
-            } else if (memberData.membershipType === 'associate') {
-                memberDataToSave.graduationYear = parseInt(memberData.graduationYear);
-                memberDataToSave.status = 'associate_member';
+            // Add year field for ongoing students, set to 1 for first years
+            if (memberData.studentType === 'first_year') {
+                memberDataToSave.currentYear = 1;
+                memberDataToSave.yearStatus = 'first_year_student';
+            } else if (memberData.studentType === 'ongoing_student') {
+                memberDataToSave.currentYear = parseInt(memberData.currentYear);
+                memberDataToSave.yearStatus = 'ongoing_student';
             }
 
-            // Save to Firestore
+            // Save to Firestore with proper error checking
             const docRef = await addDoc(collectionRef, memberDataToSave);
             
-            // Show success message
-            toast.success('Registration completed successfully!');
-            
-            // Log success for debugging
-            console.log('Member registered successfully! ');
+            // Verify the document was created successfully
+            if (docRef && docRef.id) {
+                // Store the member name for the success component
+                setRegisteredMemberName(memberData.fullName.trim());
+                
+                // Show success message
+                toast.success('Registration completed successfully! Welcome to MSA!');
+                
+                // Log success for debugging
+                console.log('Member registered successfully with ID:', docRef.id);
 
-            // Reset form after successful submission
-            setMemberData({
-                fullName: '',
-                membershipType: '',
-                currentYear: '',
-                graduationYear: '',
-                phoneNumber: '',
-            });
+                // Reset form after successful submission
+                setMemberData({
+                    fullName: '',
+                    studentType: '',
+                    currentYear: '',
+                    phoneNumber: '',
+                });
+
+                // Show the celebration component
+                setShowSuccess(true);
+            } else {
+                throw new Error('Failed to create registration record');
+            }
 
         } catch (error) {
-            // Handle any errors during submission
+            // Handle specific Firebase errors
             console.error('Error registering member:', error);
-            toast.error('Failed to complete registration. Please try again.');
+            
+            // Provide specific error messages based on error type
+            if (error.code === 'permission-denied') {
+                toast.error('Permission denied. Please contact support.');
+            } else if (error.code === 'unavailable') {
+                toast.error('Service temporarily unavailable. Please try again later.');
+            } else if (error.code === 'network-request-failed') {
+                toast.error('Network error. Please check your internet connection.');
+            } else if (error.message && error.message.includes('quota')) {
+                toast.error('Service limit reached. Please try again later.');
+            } else {
+                toast.error('Registration failed. Please try again or contact support.');
+            }
         } finally {
-            // Always stop loading state
+            // Always stop loading state regardless of success or failure
             setIsLoading(false);
         }
     }
 
+    /**
+     * Handle WhatsApp group join
+     * Opens WhatsApp group link in new window
+     */
+    const handleJoinWhatsApp = () => {
+        // MSA WhatsApp group link - replace with your actual group link
+        // Example format: https://chat.whatsapp.com/XXXXXXXXXXXXXXX
+        const whatsappGroupLink = ' https://chat.whatsapp.com/BqkU3TR9IbC77Gm0g2Kp9O';
+        
+        // Open WhatsApp in new window/tab
+        window.open(whatsappGroupLink, '_blank', 'noopener,noreferrer');
+        
+        // Show confirmation message
+        toast.success('Redirecting to WhatsApp! Join our community group.');
+        
+        // Close the success modal after joining
+        setTimeout(() => {
+            setShowSuccess(false);
+        }, 1500);
+    };
+
+    /**
+     * Handle closing the success modal
+     */
+    const handleCloseSuccess = () => {
+        setShowSuccess(false);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
+            {/* Success Celebration Modal */}
+            {showSuccess && (
+                <RegistrationSuccess
+                    memberName={registeredMemberName}
+                    onJoinWhatsApp={handleJoinWhatsApp}
+                    onClose={handleCloseSuccess}
+                />
+            )}
             
             {/* Hero Section */}
             <section className="relative py-24 bg-gray-900 overflow-hidden">
@@ -230,64 +294,64 @@ export default function Registration() {
                                 </div>
                             </div>
 
-                            {/* Membership Type Selection */}
+                            {/* Student Type Selection */}
                             <div className="space-y-4">
                                 <label className="block text-sm font-semibold text-gray-900">
-                                    Membership Type <span className="text-red-500">*</span>
+                                    Student Status <span className="text-red-500">*</span>
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Current Student Option */}
+                                    {/* First Year Option */}
                                     <div
-                                        onClick={() => handleMembershipTypeChange('current_student')}
+                                        onClick={() => handleStudentTypeChange('first_year')}
                                         className={`relative cursor-pointer rounded-lg border-2 p-6 transition-all duration-200 hover:shadow-md ${
-                                            memberData.membershipType === 'current_student'
+                                            memberData.studentType === 'first_year'
                                                 ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
                                                 : 'border-gray-200 bg-white hover:border-gray-300'
                                         }`}
                                     >
                                         <div className="flex items-center space-x-3">
                                             <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                memberData.membershipType === 'current_student'
+                                                memberData.studentType === 'first_year'
                                                     ? 'bg-blue-600 text-white'
                                                     : 'bg-gray-100 text-gray-500'
                                             }`}>
                                                 <GraduationCap className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-gray-900">Current Student</h3>
-                                                <p className="text-sm text-gray-600 font-light">Currently enrolled in studies</p>
+                                                <h3 className="font-semibold text-gray-900">First Year Student</h3>
+                                                <p className="text-sm text-gray-600 font-light">Just starting your studies</p>
                                             </div>
                                         </div>
-                                        {memberData.membershipType === 'current_student' && (
+                                        {memberData.studentType === 'first_year' && (
                                             <div className="absolute top-3 right-3">
                                                 <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Associate Option */}
+                                    {/* Ongoing Student Option */}
                                     <div
-                                        onClick={() => handleMembershipTypeChange('associate')}
+                                        onClick={() => handleStudentTypeChange('ongoing_student')}
                                         className={`relative cursor-pointer rounded-lg border-2 p-6 transition-all duration-200 hover:shadow-md ${
-                                            memberData.membershipType === 'associate'
+                                            memberData.studentType === 'ongoing_student'
                                                 ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
                                                 : 'border-gray-200 bg-white hover:border-gray-300'
                                         }`}
                                     >
                                         <div className="flex items-center space-x-3">
                                             <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                                                memberData.membershipType === 'associate'
+                                                memberData.studentType === 'ongoing_student'
                                                     ? 'bg-blue-600 text-white'
                                                     : 'bg-gray-100 text-gray-500'
                                             }`}>
                                                 <Users className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-gray-900">Associate Member</h3>
-                                                <p className="text-sm text-gray-600 font-light">Alumni or community member</p>
+                                                <h3 className="font-semibold text-gray-900">Ongoing Student</h3>
+                                                <p className="text-sm text-gray-600 font-light">Currently in 2nd, 3rd, or 4th year</p>
                                             </div>
                                         </div>
-                                        {memberData.membershipType === 'associate' && (
+                                        {memberData.studentType === 'ongoing_student' && (
                                             <div className="absolute top-3 right-3">
                                                 <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
                                             </div>
@@ -296,11 +360,11 @@ export default function Registration() {
                                 </div>
                             </div>
 
-                            {/* Conditional Fields Based on Membership Type */}
-                            {memberData.membershipType && (
+                            {/* Conditional Fields Based on Student Type */}
+                            {memberData.studentType && (
                                 <div className="space-y-6 pt-4 border-t border-gray-200">
-                                    {/* Current Student Fields */}
-                                    {memberData.membershipType === 'current_student' && (
+                                    {/* Year Selection for Ongoing Students */}
+                                    {memberData.studentType === 'ongoing_student' && (
                                         <div className="space-y-2">
                                             <label htmlFor="currentYear" className="block text-sm font-semibold text-gray-900">
                                                 Current Year of Study <span className="text-red-500">*</span>
@@ -318,45 +382,28 @@ export default function Registration() {
                                                     required
                                                 >
                                                     <option value="">Select your current year</option>
-                                                    <option value="1">First Year</option>
                                                     <option value="2">Second Year</option>
                                                     <option value="3">Third Year</option>
                                                     <option value="4">Fourth Year</option>
-                                                    <option value="5">Fifth Year</option>
-                                                    <option value="6">Sixth Year</option>
-                                                    <option value="postgraduate">Postgraduate</option>
                                                 </select>
                                             </div>
                                         </div>
                                     )}
 
-                                    {/* Associate Member Fields */}
-                                    {memberData.membershipType === 'associate' && (
-                                        <div className="space-y-2">
-                                            <label htmlFor="graduationYear" className="block text-sm font-semibold text-gray-900">
-                                                Graduation Year <span className="text-red-500">*</span>
-                                            </label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <Calendar className="h-5 w-5 text-gray-400" />
-                                                </div>
-                                                <input
-                                                    type="number"
-                                                    id="graduationYear"
-                                                    name="graduationYear"
-                                                    value={memberData.graduationYear}
-                                                    onChange={handleChange}
-                                                    min="1990"
-                                                    max="2030"
-                                                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors text-gray-900 placeholder-gray-500 font-light"
-                                                    placeholder="e.g., 2023"
-                                                    required
-                                                />
+                                    {/* Information for First Year Students */}
+                                    {memberData.studentType === 'first_year' && (
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                            <div className="flex items-center space-x-2">
+                                                <GraduationCap className="h-5 w-5 text-blue-600" />
+                                                <h4 className="font-semibold text-blue-900">
+                                                    Hello {memberData.fullName.trim() ? memberData.fullName : "First Year"}!
+                                                </h4>
                                             </div>
+                                            <p className="text-sm text-blue-700 mt-2">
+                                                We are excited to start this journey with you. Just enter your phone number below to complete registration.
+                                            </p>
                                         </div>
                                     )}
-
-                                    {/* Phone Number Field (Common for both types) */}
                                     <div className="space-y-2">
                                         <label htmlFor="phoneNumber" className="block text-sm font-semibold text-gray-900">
                                             Phone Number <span className="text-red-500">*</span>
@@ -411,9 +458,19 @@ export default function Registration() {
                             <div className="pt-6">
                                 <button
                                     type="submit"
-                                    disabled={!memberData.membershipType || isLoading || (memberData.phoneNumber && memberData.phoneNumber.replace(/\D/g, '').length !== 10)}
+                                    disabled={
+                                        !memberData.studentType || 
+                                        isLoading || 
+                                        !memberData.fullName.trim() ||
+                                        (memberData.phoneNumber && memberData.phoneNumber.replace(/\D/g, '').length !== 10) || 
+                                        (memberData.studentType === 'ongoing_student' && !memberData.currentYear)
+                                    }
                                     className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 ${
-                                        memberData.membershipType && !isLoading && (!memberData.phoneNumber || memberData.phoneNumber.replace(/\D/g, '').length === 10)
+                                        memberData.studentType && 
+                                        !isLoading && 
+                                        memberData.fullName.trim() &&
+                                        (!memberData.phoneNumber || memberData.phoneNumber.replace(/\D/g, '').length === 10) && 
+                                        (memberData.studentType === 'first_year' || memberData.currentYear)
                                             ? 'bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transform hover:scale-105'
                                             : 'bg-gray-300 cursor-not-allowed'
                                     } focus:outline-none`}

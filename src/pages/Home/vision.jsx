@@ -6,6 +6,7 @@ import Skills from '/images/home/skill development.jpg';
 import Industry from '/images/home/industry.jpg'
 import Practice from '/images/home/practice.jpg';
 
+
 const content = [
   {
     title: "Bridging Theory and Practice",

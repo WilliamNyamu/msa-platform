@@ -12,6 +12,7 @@ import Blog from './pages/Blog.jsx'
 import BlogPost from './pages/Blog[id].jsx';
 import Gallery from './pages/Gallery.jsx'
 import Registration from './pages/Register.jsx';
+import Contact from './pages/Contact.jsx';
 import AdminLayout from './pages/Admin/AdminLayout.jsx'
 import ProtectedRoute from './components/Layout/ProtectedRoute.jsx';
 import AdminDashboard from './pages/Admin/AdminDashboard.jsx'
@@ -44,6 +45,7 @@ function App() {
           <Route path='/blog/:slug' element={<BlogPost />} />
           <Route path='/gallery' element={<Gallery />} />
           <Route path='/register' element={<Registration />} />
+          <Route path='/contact' element={<Contact />} />
         </Route>
         {/* Add other routes here */}
         <Route

@@ -3,6 +3,9 @@ import React from "react";
 
 import { twMerge } from "tailwind-merge";
 import { TracingBeam } from "../../components/ui/tracing-beam";
+import Optiven from '/images/mission/optiven.jpg'
+import Eabl from '/images/mission/Eabl.jpg'
+import Networking from '/images/mission/connections.jpg'
 
 export default function Mission() {
   return (
@@ -59,7 +62,7 @@ const dummyContent = [
         ),
         badge: "Practicality",
         image:
-            "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=3540&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            Optiven,
     },
     {
         title: "Catalyst for Student Growth through Industry Partnerships",
@@ -73,7 +76,7 @@ const dummyContent = [
         ),
         badge: "Industry Partnerships",
         image:
-            "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=3540&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            Eabl,
     },
     {
         title: "Create lifelong networks",
@@ -90,6 +93,6 @@ const dummyContent = [
         ),
         badge: "Networking",
         image:
-            "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=3506&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            Networking,
     },
 ];

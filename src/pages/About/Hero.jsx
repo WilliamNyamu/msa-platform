@@ -8,101 +8,103 @@ import industry from '/images/home/industry.jpg'
 import mentorship from '/images/home/mentorship.jpg'
 import practice from '/images/home/practice.jpg'
 import training from '/images/home/training.jpg'
+import Bitcoin from '/images/vision/bitcoin.jpg'
+import Eabl from '/images/mission/Eabl.jpg'
 
 export function AboutHero() {
   return <HeroParallax products={products} />;
 }
 export const products = [
   {
-    title: "Moonbeam",
-    link: "https://gomoonbeam.com",
+    title: "MSAwesome",
+    link: "",
     thumbnail:
       Breakfast,
   },
   {
-    title: "Cursor",
-    link: "https://cursor.so",
+    title: "Pure Magic",
+    link: "",
     thumbnail:
       Dinner,
   },
   {
-    title: "Rogue",
-    link: "https://userogue.com",
+    title: "Fun Moments",
+    link: "",
     thumbnail:
       fun,
   },
 
   {
-    title: "Editorially",
-    link: "https://editorially.org",
+    title: "Mentorship",
+    link: "",
     thumbnail:
       mentorship,
   },
   {
-    title: "Editrix AI",
-    link: "https://editrix.ai",
+    title: "Industrial Visits",
+    link: "",
     thumbnail:
       industry,
   },
   {
-    title: "Pixel Perfect",
-    link: "https://app.pixelperfect.quest",
+    title: "Practicality",
+    link: "",
     thumbnail:
       practice,
   },
 
   {
-    title: "Algochurn",
-    link: "https://algochurn.com",
+    title: "Training",
+    link: "",
     thumbnail:
       training,
   },
   {
-    title: "Aceternity UI",
-    link: "https://ui.aceternity.com",
+    title: "Bitcoin Seminar",
+    link: "",
     thumbnail:
-      training,
+      Bitcoin,
   },
   {
-    title: "Tailwind Master Kit",
-    link: "https://tailwindmasterkit.com",
+    title: "GodBlessBitcoin",
+    link: "",
     thumbnail:
       fun,
   },
   {
-    title: "SmartBridge",
-    link: "https://smartbridgetech.com",
+    title: "Breakfast",
+    link: "",
     thumbnail:
       Breakfast,
   },
   {
-    title: "Renderwork Studio",
-    link: "https://renderwork.studio",
+    title: "Eabl Partnership",
+    link: "",
     thumbnail:
-      Dinner,
+      Eabl,
   },
 
   {
-    title: "Creme Digital",
-    link: "https://cremedigital.com",
+    title: "Mentorship",
+    link: "",
     thumbnail:
       mentorship,
   },
   {
-    title: "Golden Bells Academy",
-    link: "https://goldenbellsacademy.com",
+    title: "MSAwesome",
+    link: "",
     thumbnail:
       practice,
   },
   {
-    title: "Invoker Labs",
-    link: "https://invoker.lol",
+    title: "Its We",
+    link: "",
     thumbnail:
       Dinner,
   },
   {
-    title: "E Free Invoice",
-    link: "https://efreeinvoice.com",
+    title: "Industry Partnerships",
+    link: "",
     thumbnail:
       industry,
   },
