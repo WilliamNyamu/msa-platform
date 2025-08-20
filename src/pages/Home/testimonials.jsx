@@ -17,7 +17,7 @@ const Testimonials = ({
   const defaultTestimonials = [
     {
       src: Shalom,
-      name: "Shalom Ndanu Mwaka",
+      name: "Shalom Ndanu",
       designation: "President, MSA 25/26",
       quote: "Saying that MSA is good is an understatement. It has truly transformed my leadership journey and my career path. I'd prefer to call it: MSAwesome."
     },
