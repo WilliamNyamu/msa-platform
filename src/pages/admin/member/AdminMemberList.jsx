@@ -82,11 +82,7 @@ export default function AdminMemberList() {
      * Toggle member status (active/inactive)
      */
     const handleToggleStatus = async (memberId, currentStatus, memberName) => {
-        const newStatus = currentStatus === 'active_student' || currentStatus === 'associate_member' 
-            ? 'inactive' 
-            : currentStatus === 'inactive' 
-                ? 'active_student' 
-                : 'active_student';
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
 
         try {
             await updateDoc(doc(database, 'members', memberId), {
@@ -114,9 +110,8 @@ export default function AdminMemberList() {
                             member.phoneNumber?.includes(searchTerm);
         
         const matchesFilter = filterType === 'all' || 
-                            (filterType === 'students' && member.membershipType === 'current_student') ||
-                            (filterType === 'associates' && member.membershipType === 'associate') ||
-                            (filterType === 'active' && (member.status === 'active_student' || member.status === 'associate_member')) ||
+                            (filterType === 'students' && (member.studentType === 'first_year' || member.studentType === 'ongoing_student' || member.yearStatus === 'first_year_student' || member.yearStatus === 'ongoing_student')) ||
+                            (filterType === 'active' && member.status === 'active') ||
                             (filterType === 'inactive' && member.status === 'inactive');
         
         return matchesSearch && matchesFilter;
@@ -139,10 +134,8 @@ export default function AdminMemberList() {
      */
     const getStatusBadge = (status) => {
         switch (status) {
-            case 'active_student':
+            case 'active':
                 return 'bg-green-100 text-green-800 border border-green-200';
-            case 'associate_member':
-                return 'bg-blue-100 text-blue-800 border border-blue-200';
             case 'inactive':
                 return 'bg-gray-100 text-gray-800 border border-gray-200';
             default:
@@ -154,14 +147,13 @@ export default function AdminMemberList() {
      * Export members data to CSV
      */
     const exportToCSV = () => {
-        const headers = ['Name', 'Membership Type', 'Phone', 'Current Year', 'Graduation Year', 'Status', 'Created At'];
+        const headers = ['Name', 'Student Type', 'Phone', 'Current Year', 'Status', 'Created At'];
         const csvData = filteredMembers.map(member => [
             member.fullName,
-            member.membershipType?.replace('_', ' '),
+            member.studentType === 'first_year' ? 'First Year' : member.studentType === 'ongoing_student' ? 'Ongoing Student' : 'N/A',
             formatPhoneNumber(member.phoneNumber),
             member.currentYear || 'N/A',
-            member.graduationYear || 'N/A',
-            member.status?.replace('_', ' '),
+            member.status?.replace('_', ' ') || 'N/A',
             member.createdAt?.toLocaleDateString()
         ]);
 
@@ -183,19 +175,20 @@ export default function AdminMemberList() {
      * Get member statistics for charts
      */
     const getMemberStats = () => {
-        const currentStudents = members.filter(m => m.membershipType === 'current_student').length;
-        const associates = members.filter(m => m.membershipType === 'associate').length;
-        const activeMembers = members.filter(m => m.status === 'active_student' || m.status === 'associate_member').length;
+        const firstYearStudents = members.filter(m => m.studentType === 'first_year' || m.yearStatus === 'first_year_student').length;
+        const ongoingStudents = members.filter(m => m.studentType === 'ongoing_student' || m.yearStatus === 'ongoing_student').length;
+        const activeMembers = members.filter(m => m.status === 'active').length;
         const inactiveMembers = members.filter(m => m.status === 'inactive').length;
 
-        // Year distribution for current students
+        // Year distribution for students
         const yearDistribution = {
-            '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, 'postgraduate': 0
+            '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0
         };
         
-        members.filter(m => m.membershipType === 'current_student').forEach(member => {
-            if (member.currentYear && yearDistribution.hasOwnProperty(member.currentYear)) {
-                yearDistribution[member.currentYear]++;
+        members.forEach(member => {
+            const year = member.currentYear;
+            if (year && yearDistribution.hasOwnProperty(year.toString())) {
+                yearDistribution[year.toString()]++;
             }
         });
 
@@ -217,7 +210,7 @@ export default function AdminMemberList() {
         }
 
         return {
-            membershipTypes: { currentStudents, associates },
+            studentTypes: { firstYearStudents, ongoingStudents },
             statusTypes: { activeMembers, inactiveMembers },
             yearDistribution,
             monthlyData
@@ -298,7 +291,11 @@ export default function AdminMemberList() {
                                     style={{ backgroundColor: segment.color }}
                                 ></div>
                                 <span className="text-sm text-gray-700 capitalize">
-                                    {segment.label.replace(/([A-Z])/g, ' $1').trim()}: {segment.value} ({segment.percentage}%)
+                                    {segment.label === 'firstYearStudents' ? 'First Year Students' : 
+                                     segment.label === 'ongoingStudents' ? 'Ongoing Students' :
+                                     segment.label === 'activeMembers' ? 'Active Members' :
+                                     segment.label === 'inactiveMembers' ? 'Inactive Members' :
+                                     segment.label.replace(/([A-Z])/g, ' $1').trim()}: {segment.value} ({segment.percentage}%)
                                 </span>
                             </div>
                         ))}
@@ -491,10 +488,10 @@ export default function AdminMemberList() {
 
                 {/* Charts and Analytics Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* Membership Types Pie Chart */}
+                    {/* Student Types Pie Chart */}
                     <PieChartComponent 
-                        data={stats.membershipTypes}
-                        title="Membership Distribution"
+                        data={stats.studentTypes}
+                        title="Student Type Distribution"
                         colors={['#3b82f6', '#8b5cf6']}
                     />
                     
@@ -550,18 +547,18 @@ export default function AdminMemberList() {
                                     <GraduationCap className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-2xl font-bold text-green-900">{stats.membershipTypes.currentStudents}</div>
-                                    <div className="text-sm text-green-700">Current Students</div>
+                                    <div className="text-2xl font-bold text-green-900">{stats.studentTypes.firstYearStudents}</div>
+                                    <div className="text-sm text-green-700">First Year Students</div>
                                 </div>
                             </div>
                             <div className="flex items-center text-xs text-green-600">
                                 <div className="flex-1 bg-green-200 rounded-full h-1.5">
                                     <div 
                                         className="bg-green-500 h-1.5 rounded-full transition-all duration-500"
-                                        style={{ width: `${(stats.membershipTypes.currentStudents / members.length) * 100}%` }}
+                                        style={{ width: `${members.length > 0 ? (stats.studentTypes.firstYearStudents / members.length) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                <span className="ml-2">{((stats.membershipTypes.currentStudents / members.length) * 100).toFixed(1)}%</span>
+                                <span className="ml-2">{members.length > 0 ? ((stats.studentTypes.firstYearStudents / members.length) * 100).toFixed(1) : 0}%</span>
                             </div>
                         </div>
                     </div>
@@ -574,18 +571,18 @@ export default function AdminMemberList() {
                                     <User className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-2xl font-bold text-purple-900">{stats.membershipTypes.associates}</div>
-                                    <div className="text-sm text-purple-700">Associates</div>
+                                    <div className="text-2xl font-bold text-purple-900">{stats.studentTypes.ongoingStudents}</div>
+                                    <div className="text-sm text-purple-700">Ongoing Students</div>
                                 </div>
                             </div>
                             <div className="flex items-center text-xs text-purple-600">
                                 <div className="flex-1 bg-purple-200 rounded-full h-1.5">
                                     <div 
                                         className="bg-purple-500 h-1.5 rounded-full transition-all duration-500"
-                                        style={{ width: `${(stats.membershipTypes.associates / members.length) * 100}%` }}
+                                        style={{ width: `${members.length > 0 ? (stats.studentTypes.ongoingStudents / members.length) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                <span className="ml-2">{((stats.membershipTypes.associates / members.length) * 100).toFixed(1)}%</span>
+                                <span className="ml-2">{members.length > 0 ? ((stats.studentTypes.ongoingStudents / members.length) * 100).toFixed(1) : 0}%</span>
                             </div>
                         </div>
                     </div>
@@ -606,10 +603,10 @@ export default function AdminMemberList() {
                                 <div className="flex-1 bg-yellow-200 rounded-full h-1.5">
                                     <div 
                                         className="bg-yellow-500 h-1.5 rounded-full transition-all duration-500"
-                                        style={{ width: `${(stats.statusTypes.activeMembers / members.length) * 100}%` }}
+                                        style={{ width: `${members.length > 0 ? (stats.statusTypes.activeMembers / members.length) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                <span className="ml-2">{((stats.statusTypes.activeMembers / members.length) * 100).toFixed(1)}%</span>
+                                <span className="ml-2">{members.length > 0 ? ((stats.statusTypes.activeMembers / members.length) * 100).toFixed(1) : 0}%</span>
                             </div>
                         </div>
                     </div>
@@ -640,8 +637,7 @@ export default function AdminMemberList() {
                                     className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="all">All Members</option>
-                                    <option value="students">Current Students</option>
-                                    <option value="associates">Associates</option>
+                                    <option value="students">Students</option>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                 </select>
@@ -680,13 +676,13 @@ export default function AdminMemberList() {
                                             Member
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Type
+                                            Student Type
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Contact
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Details
+                                            Academic Info
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Status
@@ -721,11 +717,17 @@ export default function AdminMemberList() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    member.membershipType === 'current_student' 
+                                                    member.studentType === 'first_year' || member.yearStatus === 'first_year_student'
                                                         ? 'bg-blue-100 text-blue-800' 
-                                                        : 'bg-purple-100 text-purple-800'
+                                                        : member.studentType === 'ongoing_student' || member.yearStatus === 'ongoing_student'
+                                                        ? 'bg-purple-100 text-purple-800'
+                                                        : 'bg-gray-100 text-gray-800'
                                                 }`}>
-                                                    {member.membershipType === 'current_student' ? 'Student' : 'Associate'}
+                                                    {member.studentType === 'first_year' || member.yearStatus === 'first_year_student' 
+                                                        ? 'First Year' 
+                                                        : member.studentType === 'ongoing_student' || member.yearStatus === 'ongoing_student'
+                                                        ? 'Ongoing Student' 
+                                                        : 'N/A'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -735,15 +737,14 @@ export default function AdminMemberList() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {member.membershipType === 'current_student' ? (
+                                                <div className="flex items-center">
+                                                    <GraduationCap className="w-4 h-4 text-gray-400 mr-2" />
                                                     <span>Year {member.currentYear || 'N/A'}</span>
-                                                ) : (
-                                                    <span>Graduated {member.graduationYear || 'N/A'}</span>
-                                                )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(member.status)}`}>
-                                                    {member.status?.replace('_', ' ') || 'Unknown'}
+                                                    {member.status === 'active' ? 'Active' : member.status === 'inactive' ? 'Inactive' : 'Unknown'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
