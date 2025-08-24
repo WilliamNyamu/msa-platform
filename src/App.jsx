@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {Route, Routes, Outlet} from 'react-router-dom'
+import { AuthProvider } from './contexts/AuthContext'
 import Navbar from './components/Layout/Navbar.jsx';
 import Footer from './components/Layout/Footer.jsx';
 import Home from './components/home.jsx';
@@ -33,7 +34,7 @@ const MainLayout = () => {
 function App() {
 
   return (
-    <>
+    <AuthProvider>
       <Routes>
         <Route path='/admin-login' element={<AdminLoginForm />} />
         <Route element={<MainLayout />}>
@@ -65,8 +66,7 @@ function App() {
           <Route path='members' element={<AdminMemberList />} />
         </Route>
       </Routes>
-      
-    </>
+    </AuthProvider>
   )
 }
 

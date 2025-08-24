@@ -1,15 +1,36 @@
-import React, {useState} from "react";
-import {Navigate, useLocation} from 'react-router-dom'
+import React, { useState } from "react";
+import { Navigate, useLocation } from 'react-router-dom'
 import { Lock, Mail, Eye, EyeOff, Shield, AlertCircle, Loader2 } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getAuth } from "firebase/auth";
+import { useAuth } from "../../contexts/AuthContext";
 
 
 export default function AdminLoginForm(){
     const navigate = useNavigate();
-    let auth = getAuth()
+    const location = useLocation();
+    const { user, loading } = useAuth();
+    let auth = getAuth();
+    
+    // Redirect if already authenticated
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-slate-900 flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4" />
+                    <p className="text-white">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+    
+    if (user) {
+        const from = location.state?.from?.pathname || '/admin/dashboard';
+        return <Navigate to={from} replace />;
+    }
+
     //Create a logging state to track auth submission
     const [isLogging, setIsLogging] = useState(false)
 
@@ -36,23 +57,31 @@ export default function AdminLoginForm(){
             const userCredential = await signInWithEmailAndPassword(auth, authData.email, authData.password);
             const user = userCredential.user
 
-            // Store the admin email in localStorage for later use
-            localStorage.setItem("authToken", user.accessToken)
-            localStorage.setItem("adminEmail", user.email);
-
-            // If the user exists, proceed to the dashboard
+            // Firebase Auth will automatically update the auth state
+            // No need to manually store tokens in localStorage
+            
+            // Reset form
             setAuthData({
                 email: '',
                 password: '',
             });
+            
             toast.success("Login Successful. Taking you to the dashboard", {style: { color: 'green'} });
-            //navigate to somewhere
-            navigate('/admin/dashboard');
+            
+            // Navigate to the intended destination or dashboard
+            const from = location.state?.from?.pathname || '/admin/dashboard';
+            navigate(from, { replace: true });
         } catch(error) {
             if (error.code === 'auth/user-not-found') {
                 //redirect to home page if the user is notfound
                 toast.error("You are not an admin. Bye, bye :(", {style: {color : 'red'}});
                 navigate('/');
+            } else if (error.code === 'auth/wrong-password') {
+                toast.error("Invalid password. Please try again.", {style: {color: 'red'}});
+            } else if (error.code === 'auth/invalid-email') {
+                toast.error("Invalid email address.", {style: {color: 'red'}});
+            } else if (error.code === 'auth/user-disabled') {
+                toast.error("This account has been disabled.", {style: {color: 'red'}});
             } else {
                 //handle other errors
                 toast.error(error.message, {style: {color: 'red'}})
@@ -139,10 +168,20 @@ export default function AdminLoginForm(){
                         {/* Submit button */}
                         <button
                             type="submit"
-                            className="w-full bg-gradient-to-r from-blue-400 to-blue-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform cursor-pointer flex items-center justify-center"
+                            disabled={isLogging}
+                            className="w-full bg-gradient-to-r from-blue-400 to-blue-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Shield className='w-5 h-5 mr-2' />
-                            Sign In to Dashboard
+                            {isLogging ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    Signing In...
+                                </>
+                            ) : (
+                                <>
+                                    <Shield className='w-5 h-5 mr-2' />
+                                    Sign In to Dashboard
+                                </>
+                            )}
                         </button>
                     </form>
                     {/* Footer */}

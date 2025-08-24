@@ -1,32 +1,30 @@
 import {useEffect, useState} from 'react';
 import {NavLink, useNavigate, useLocation, Outlet} from 'react-router-dom';
 import { Home, FileText, Calendar, Image, Users, LogOut, Menu, X, Settings, Bell, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'sonner';
 
 export default function AdminLayout() {
-    const [adminEmail, setAdminEmail] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, logout, userEmail } = useAuth();
 
     useEffect(() => {
-        const authToken = localStorage.getItem('authToken');
-        const email = localStorage.getItem('adminEmail'); // Assuming the admin email was saved in local storage
-
-        if (!authToken) {
-            navigate('/admin-login');
-        } else {
-            setAdminEmail(email || 'Admin'); //Fallback to 'Admin' if email is not found
-        }
-        
         // Remove artificial loading delay - set loading to false immediately
         setIsLoading(false);
-    }, [navigate]);
+    }, []);
 
-    const handleSignOut = () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('adminEmail');
-        navigate('/admin-login');
+    const handleSignOut = async () => {
+        try {
+            await logout();
+            toast.success('Logged out successfully');
+            navigate('/admin-login');
+        } catch (error) {
+            console.error('Error signing out:', error);
+            toast.error('Error signing out');
+        }
     };
 
     const toggleSidebar = () => {
@@ -162,14 +160,14 @@ export default function AdminLayout() {
                                 <div className='relative'>
                                     <div className='w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg'>
                                         <span className='text-white font-bold text-lg'>
-                                            {adminEmail.charAt(0).toUpperCase()}
+                                            {userEmail?.charAt(0).toUpperCase() || 'A'}
                                         </span>
                                     </div>
                                     <div className='absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white'></div>
                                 </div>
                                 <div className='flex-1 min-w-0'>
                                     <p className='text-sm font-semibold text-slate-800 truncate'>
-                                        {adminEmail}
+                                        {userEmail || 'Administrator'}
                                     </p>
                                     <p className='text-xs text-slate-500'>Administrator</p>
                                 </div>
@@ -219,7 +217,7 @@ export default function AdminLayout() {
                             </button>
                             <div className='w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-md'>
                                 <span className='text-white font-bold text-sm'>
-                                    {adminEmail.charAt(0).toUpperCase()}
+                                    {userEmail?.charAt(0).toUpperCase() || 'A'}
                                 </span>
                             </div>
                         </div>
