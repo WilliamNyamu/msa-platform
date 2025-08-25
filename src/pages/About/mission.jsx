@@ -56,7 +56,7 @@ const dummyContent = [
                     Experience a platform where <strong>learning meets doing</strong>. We provide resources, mentorship, and a collaborative environment to turn your concepts into impactful outcomes, accelerating your journey from inspiration to implementation.
                 </p>
                 <p>
-                    Join a community dedicated to progress, where <strong>your vision is nurtured and your goals are within reach</strong>. Together, we’re building the future—one breakthrough at a time.
+                    Join a community dedicated to progress, where <strong>your vision is nurtured and your goals are within reach</strong>. Together, we're building the future—one breakthrough at a time.
                 </p>
             </>
         ),
