@@ -25,7 +25,7 @@ const TeamSection = () => {
       src: "/images/team/shalom.jpg",
       name: 'Shalom Ndanu',
       position: "President",
-      description: "Leading MSA with vision and dedication to student excellence.",
+      description: "Leading MSA with vision, enthusiasm and dedication to student excellence.",
       linkedin: "https://linkedin.com/in/shalom-ndanu",
       twitter: "https://twitter.com/shalomndanu",
       email: "shalom@msa.ac.ke"
@@ -70,10 +70,19 @@ const TeamSection = () => {
       src: "/images/team/William.jpg",
       name: "William Nyamu",
       position: "Publicity Director",
-      description: "Crafting compelling narratives and managing digital presence.",
+      description: "Managing digital presence and hacking growth within MSA",
       linkedin: "https://linkedin.com/in/william-nyamu",
       twitter: "https://twitter.com/williamnyamu",
       email: "william@msa.ac.ke"
+    },
+    {
+      src: "/images/team/shiren.jpg",
+      name: "Shiren Joel",
+      position: "Publicity Coordinator",
+      description: "Crafting compelling narratives and managing digital presence.",
+      linkedin: "https://linkedin.com/in/shiren-joel",
+      twitter: "https://x.com/shirenjoel",
+      email: "shiren@msa.ac.ke"
     },
     {
       src: "/images/team/eva.jpg",
@@ -97,7 +106,7 @@ const TeamSection = () => {
       src: "/images/team/rep3.jpg",
       name: 'Margaret Mutenyo',
       position: 'Mentorship Affairs Coordinator',
-      description: "Coordinating Menotship affairs within the organization",
+      description: "Creating connections that spark growth, confidence, and bold career moves.",
       linkedin: "https://linkedin.com/in/margaretmutenyo",
       twitter: "",
       email: ""
